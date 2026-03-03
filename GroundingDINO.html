@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paper Review: DINO & Grounding DINO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
+        
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            overflow: hidden;
+            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .slide {
+            display: none;
+            height: 100vh;
+            width: 100vw;
+            padding: 1.5rem;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            flex-grow: 1;
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .progress-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: rgba(0,0,0,0.05);
+            border-top-left-radius: 1.5rem;
+            border-top-right-radius: 1.5rem;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #0ea5e9, #6366f1);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-btn {
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 0.75rem;
+            border-radius: 9999px;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+        .nav-btn:hover { background: #f8fafc; transform: scale(1.1); color: #0f172a; }
+
+        .native-graphic {
+            background: #f1f5f9;
+            border-radius: 1rem;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+        }
+
+        .glass-card::-webkit-scrollbar { width: 8px; }
+        .glass-card::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="presentation-container">
+        <!-- 슬라이드 1: 타이틀 -->
+        <div class="slide active" data-slide="1">
+            <div class="glass-card justify-center items-center text-center">
+                <div class="progress-container"><div class="progress-bar" style="width: 3.03%;"></div></div>
+                <div class="mb-8 px-6 py-2 bg-emerald-100 border border-emerald-200 rounded-full text-emerald-800 text-lg font-extrabold uppercase tracking-widest shadow-sm">Paper Review Masterclass</div>
+                <h1 class="text-7xl font-extrabold mb-8 tracking-tight leading-tight">
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500">DINO</span><br>
+                    <span class="text-gray-400 text-4xl">&</span><br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600 text-7xl">Grounding DINO</span>
+                </h1>
+                <p class="text-2xl text-gray-700 max-w-4xl mb-12 leading-relaxed font-bold bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                    "객체 탐지의 종착역 DINO에서부터, <br>언어를 이해하는 Open-Set 탐지기 Grounding DINO까지"
+                </p>
+                
+                <div class="w-full max-w-3xl native-graphic h-40 bg-gray-50 border-gray-200 flex items-center justify-center gap-10">
+                    <div class="text-center">
+                        <span class="text-7xl drop-shadow-md">🦖</span>
+                        <p class="text-base mt-4 font-extrabold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">Part 1: DINO</p>
+                    </div>
+                    <span class="text-5xl text-gray-300 font-bold">➔</span>
+                    <div class="text-center">
+                        <span class="text-7xl drop-shadow-md">💬</span>
+                        <p class="text-base mt-4 font-extrabold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">Part 2: Grounding DINO</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 2: 목차 -->
+        <div class="slide" data-slide="2">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 6.06%;"></div></div>
+                <h2 class="text-4xl font-extrabold mb-10 text-gray-800 border-b-2 border-gray-100 pb-4">Table of Contents</h2>
+                <div class="grid grid-cols-2 gap-12">
+                    <div class="space-y-6">
+                        <h3 class="text-2xl font-extrabold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-lg inline-block">Part 1. DINO (The Foundation)</h3>
+                        <ul class="space-y-3 ml-4 text-gray-700 font-bold text-base">
+                            <li>03. DETR의 등장과 치명적인 단점 (느린 수렴)</li>
+                            <li>04. 왜 DETR은 학습이 느렸을까? (매칭의 혼란)</li>
+                            <li>05. DINO의 해결책 1: Contrastive DeNoising</li>
+                            <li>06. DeNoising 훈련의 시각적 이해</li>
+                            <li>07. DINO의 해결책 2: Mixed Query Selection</li>
+                            <li>08. DINO의 해결책 3: Look Forward Twice</li>
+                            <li>09. DINO 아키텍처 완성도 요약</li>
+                            <li>10. DINO의 한계: "사전에 배운 것만 찾는다"</li>
+                        </ul>
+                    </div>
+                    <div class="space-y-6">
+                        <h3 class="text-2xl font-extrabold text-blue-700 bg-blue-50 px-4 py-2 rounded-lg inline-block">Part 2. Grounding DINO (The Evolution)</h3>
+                        <ul class="space-y-3 ml-4 text-gray-700 font-bold text-base">
+                            <li>11. Closed-set의 한계와 Open-set의 필요성</li>
+                            <li>12. 핵심 개념: 'Grounding(정렬)' 이란 무엇인가?</li>
+                            <li>13. 왜 GLIP 대신 DINO를 베이스로 선택했나?</li>
+                            <li>14. 아키텍처 개요: 3단계 깊은 융합(Deep Fusion)</li>
+                            <li>15. Dual Backbones (특징 추출기)</li>
+                            <li><strong class="text-blue-600">16. Image Backbone: Swin Transformer 심층 분석</strong></li>
+                            <li><strong class="text-purple-600">17. Text Backbone: BERT 심층 분석</strong></li>
+                            <li>18. Phase 1: Feature Enhancer (초기 융합)</li>
+                            <li>19. Phase 2: Language-Guided Query Selection</li>
+                            <li>20. 일반 DINO와의 쿼리 생성 방식 비교</li>
+                            <li>21~33. Decoder, Loss, Sub-sentence, 응용, 결론</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PART 1: DINO ==================== -->
+
+        <!-- 슬라이드 3: DETR의 등장과 단점 -->
+        <div class="slide" data-slide="3">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 9.09%;"></div></div>
+                <div class="mb-4 text-emerald-600 font-bold text-lg">Part 1. DINO의 배경</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">03. DETR의 등장과 치명적인 단점</h2>
+                <div class="grid grid-cols-2 gap-10 h-full items-center">
+                    <div class="space-y-6">
+                        <p class="text-xl text-gray-700 leading-relaxed font-bold">
+                            객체 탐지 분야는 <strong>DETR (Detection Transformer)</strong>의 등장으로 큰 충격을 받았습니다. 사람이 수작업으로 만들던 앵커 박스(Anchor Box)와 NMS(중복 제거)를 완전히 없애버렸기 때문입니다.
+                        </p>
+                        <div class="bg-red-50 border-l-8 border-red-500 p-6 rounded-r-2xl shadow-sm">
+                            <h4 class="font-extrabold text-red-800 mb-3 text-xl">하지만 너무나 느린 학습 속도</h4>
+                            <p class="text-lg text-gray-700 leading-relaxed font-medium">
+                                기존 YOLO 모델들이 수십 번(Epoch)만 학습하면 될 때, DETR은 무려 <strong>500번 (500 Epochs)</strong>을 학습해야만 겨우 성능이 나왔습니다. 연산 비용이 어마어마했습니다.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="native-graphic h-full min-h-[350px] flex-col p-8 items-start justify-end pb-12 pl-16 bg-white border border-gray-200">
+                        <div class="absolute left-14 top-10 bottom-12 w-1 bg-gray-300"></div>
+                        <div class="absolute left-14 bottom-12 right-10 h-1 bg-gray-300"></div>
+                        <span class="absolute top-4 left-4 text-sm text-gray-500 font-extrabold">성능 (정확도)</span>
+                        <span class="absolute bottom-4 right-4 text-sm text-gray-500 font-extrabold">학습 시간 (Epochs)</span>
+                        
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
+                            <path d="M 20 80 Q 25 30 90 25" fill="none" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6,4"/>
+                            <path d="M 20 80 Q 60 80 90 20" fill="none" stroke="#ef4444" stroke-width="3"/>
+                        </svg>
+                        
+                        <div class="absolute top-[20%] right-[10%] text-sm font-extrabold text-red-600 bg-red-50 border border-red-200 px-4 py-2 rounded-lg shadow-sm">DETR: 끝없이 학습해야 함 🐢</div>
+                        <div class="absolute top-[30%] left-[30%] text-sm font-bold text-gray-600 bg-gray-100 border border-gray-200 px-4 py-2 rounded-lg shadow-sm">기존 모델: 빠름 🐇</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 4: 매칭의 혼란 -->
+        <div class="slide" data-slide="4">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 12.12%;"></div></div>
+                <div class="mb-4 text-emerald-600 font-bold text-lg">Part 1. DINO의 배경</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">04. 왜 DETR은 학습이 느렸을까? (매칭의 혼란)</h2>
+                <div class="grid grid-cols-2 gap-10 items-center h-full">
+                    <div class="space-y-6">
+                        <p class="text-xl text-gray-700 leading-relaxed font-medium">
+                            DETR은 '헝가리안 매칭(이분 매칭)'을 통해 중복 박스를 없앱니다. 하지만 이 매칭 방식이 <strong>초기 학습 단계에서 모델의 '뇌'를 헷갈리게</strong> 만듭니다.
+                        </p>
+                        <div class="bg-white p-6 border border-gray-200 rounded-2xl shadow-sm">
+                            <p class="text-lg text-gray-700 font-bold leading-relaxed">
+                                👨‍🎓 <strong>비유: 매일 전공이 바뀌는 대학생</strong><br><br>
+                                1번 쿼리(학생)가 첫날에는 "사과(정답 1)"를 찾는 임무를 배정받아 열심히 공부했습니다. <br>
+                                그런데 다음 날, 수학적 계산에 의해 갑자기 1번 쿼리에게 "바나나(정답 2)"를 찾으라고 임무가 바뀝니다. <br><br>
+                                쿼리 입장에서는 <strong>어제 배운 지식과 오늘 찾아야 할 목표가 달라져서 혼란(Instability)</strong>이 오고, 이 혼란이 잦아들 때까지 수백 번의 재학습이 필요했던 것입니다.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="native-graphic min-h-[350px] relative p-6 bg-gray-50 border border-gray-200 shadow-sm flex flex-col justify-center gap-10">
+                        <div class="flex items-center justify-around w-full">
+                            <div class="bg-blue-100 px-4 py-2 rounded-lg font-bold text-blue-800 border-2 border-blue-300">1번 쿼리</div>
+                            <span class="text-xl font-bold text-gray-400">Epoch 1 ➔</span>
+                            <div class="text-6xl drop-shadow-md">🍎</div>
+                        </div>
+                        <div class="flex items-center justify-around w-full">
+                            <div class="bg-blue-100 px-4 py-2 rounded-lg font-bold text-blue-800 border-2 border-blue-300">1번 쿼리</div>
+                            <span class="text-xl font-bold text-red-500">Epoch 2 ➔</span>
+                            <div class="text-6xl drop-shadow-md">🍌</div>
+                        </div>
+                        <div class="absolute bottom-6 bg-red-100 text-red-800 px-6 py-3 font-extrabold rounded-xl border border-red-300 shadow-sm text-center">
+                            "도대체 나보고 뭘 찾으라는 거야?!" 🤯
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 5: DINO 해결책 1 CD -->
+        <div class="slide" data-slide="5">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 15.15%;"></div></div>
+                <div class="mb-4 text-emerald-600 font-bold text-lg">Part 1. DINO의 핵심 혁신</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">05. 해결책 1: Contrastive DeNoising (CD)</h2>
+                <div class="space-y-6">
+                    <p class="text-xl text-gray-700 leading-relaxed font-bold bg-emerald-50 p-6 rounded-2xl border border-emerald-200 shadow-sm">
+                        DINO(DETR with Improved DeNoising Anchor Boxes)는 이 매칭 혼란을 잠재우기 위해 <strong>'노이즈 복원 훈련(DeNoising)'</strong>이라는 기발한 지름길을 만듭니다.
+                    </p>
+                    <div class="grid grid-cols-2 gap-8 mt-6">
+                        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-md">
+                            <h4 class="font-extrabold text-blue-700 text-xl mb-3">🎯 진짜 정답을 살짝 망가뜨려서 주자!</h4>
+                            <p class="text-lg text-gray-600 leading-relaxed font-medium">
+                                맨땅에 헤딩하게 두지 않고, 처음부터 <strong>진짜 정답 박스(GT)의 위치를 살짝 비틀어서(Noise)</strong> 모델에게 던져줍니다. <br>
+                                그리고 모델에게 <span class="text-blue-600 font-bold">"이 박스 위치가 조금 틀렸으니 올바르게 가운데로 고쳐봐!"</span>라고 학습시킵니다. 이를 통해 모델은 어디로 가야 정답이 있는지 단번에 깨닫게 됩니다.
+                            </p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-md">
+                            <h4 class="font-extrabold text-red-700 text-xl mb-3">🚫 대조(Contrastive) 학습의 도입</h4>
+                            <p class="text-lg text-gray-600 leading-relaxed font-medium">
+                                살짝 망가뜨린 박스(Positive)만 주는 게 아닙니다. 아예 <strong>정답에서 멀리 떨어진 엉뚱한 박스(Negative)</strong>도 함께 던져주어, <span class="text-red-600 font-bold">"이건 쓰레기니까 볼 필요도 없이 배경(Background)으로 무시해!"</span>라고 가르칩니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 6: CD 시각화 -->
+        <div class="slide" data-slide="6">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 18.18%;"></div></div>
+                <div class="mb-4 text-emerald-600 font-bold text-lg">Part 1. DINO의 핵심 혁신</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">06. DeNoising 훈련의 시각적 이해</h2>
+                <div class="grid grid-cols-2 gap-10 h-full items-center">
+                    <!-- Positive -->
+                    <div class="native-graphic flex-col h-[380px] bg-blue-50/50 border-2 border-blue-200 relative p-6">
+                        <span class="absolute top-5 left-5 text-blue-800 font-extrabold text-lg bg-blue-100 px-4 py-2 rounded-lg border border-blue-300">Positive (작은 노이즈)</span>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="text-8xl drop-shadow-md opacity-80 z-10">🚗</div>
+                            <!-- 정답 박스 -->
+                            <div class="absolute w-32 h-24 border-4 border-green-500 rounded-xl z-20"></div>
+                            <!-- 노이즈 박스 (살짝 어긋남) -->
+                            <div class="absolute w-36 h-28 border-4 border-blue-400 border-dashed rounded-xl transform translate-x-6 -translate-y-4 z-30"></div>
+                            
+                            <svg class="absolute inset-0 w-full h-full pointer-events-none z-40">
+                                <line x1="58%" y1="42%" x2="50%" y2="50%" stroke="#2563eb" stroke-width="4" stroke-dasharray="6,4"/>
+                            </svg>
+                        </div>
+                        <div class="absolute bottom-6 bg-white px-6 py-3 rounded-xl text-gray-800 font-bold shadow-md border border-gray-200 text-center w-[80%]">
+                            "가까우니까 정답(중앙)으로 복원해!"
+                        </div>
+                    </div>
+                    
+                    <!-- Negative -->
+                    <div class="native-graphic flex-col h-[380px] bg-red-50/50 border-2 border-red-200 relative p-6">
+                        <span class="absolute top-5 left-5 text-red-800 font-extrabold text-lg bg-red-100 px-4 py-2 rounded-lg border border-red-300">Negative (큰 노이즈)</span>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="text-8xl drop-shadow-md opacity-80 z-10">🚗</div>
+                            <!-- 정답 박스 -->
+                            <div class="absolute w-32 h-24 border-4 border-green-500 rounded-xl z-20"></div>
+                            <!-- 노이즈 박스 (완전 어긋남) -->
+                            <div class="absolute w-20 h-20 border-4 border-red-400 border-dashed rounded-xl transform -translate-x-20 translate-y-20 z-30 flex items-center justify-center bg-gray-200/50">
+                                <span class="text-xs font-bold text-gray-600 bg-white px-1 rounded">No!</span>
+                            </div>
+                        </div>
+                        <div class="absolute bottom-6 bg-white px-6 py-3 rounded-xl text-gray-800 font-bold shadow-md border border-gray-200 text-center w-[80%]">
+                            "너무 머니까 배경으로 무시해!"
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 7: DINO 해결책 2 Mixed Query -->
+        <div class="slide" data-slide="7">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 21.21%;"></div></div>
+                <div class="mb-4 text-emerald-600 font-bold text-lg">Part 1. DINO의 핵심 혁신</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">07. 해결책 2: Mixed Query Selection</h2>
+                <div class="grid grid-cols-2 gap-10 h-full items-center">
+                    <div class="space-y-6">
+                        <p class="text-xl text-gray-700 leading-relaxed font-bold">
+                            디코더가 물체를 찾기 시작하는 '출발점(초기 쿼리)'을 영리하게 세팅합니다.
+                        </p>
+                        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                            <p class="text-lg text-gray-600 leading-relaxed font-medium">
+                                기존에는 아무런 힌트 없이 무작위 위치에서 탐색을 시작했습니다. (마치 안대를 끼고 방 안의 물건을 더듬어 찾는 것과 같습니다.)
+                            </p>
+                            <p class="text-lg text-blue-700 leading-relaxed font-extrabold bg-blue-50 p-4 rounded-xl">
+                                DINO는 이미지 인코더가 이미 추출해놓은 특징 맵(Feature Map)을 훑어보고, "물체가 있을 법한 확률(Objectness)"이 높은 좋은 위치들을 선별해 앵커 박스(초기 출발점)로 던져줍니다.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="native-graphic h-full min-h-[350px] flex-col p-6 bg-gray-50 border border-gray-200 shadow-sm relative">
+                        <!-- 배경 이미지 (희미하게) -->
+                        <div class="absolute top-1/4 left-1/4 text-7xl opacity-20 grayscale drop-shadow-sm">🐶</div>
+                        <div class="absolute bottom-1/4 right-1/4 text-7xl opacity-20 grayscale drop-shadow-sm">🐱</div>
+                        
+                        <!-- 집중 포인트 (인코더가 알려준 곳) -->
+                        <div class="absolute top-[25%] left-[20%] w-32 h-32 border-4 border-blue-400 rounded-xl bg-blue-100/30 flex items-center justify-center shadow-[0_0_20px_rgba(96,165,250,0.5)]">
+                            <div class="w-4 h-4 bg-blue-600 rounded-full animate-ping"></div>
+                            <span class="absolute -top-8 left-0 bg-blue-600 text-white font-bold text-xs px-2 py-1 rounded whitespace-nowrap">Encoder 추천 위치 1</span>
+                        </div>
+                        
+                        <div class="absolute bottom-[20%] right-[20%] w-32 h-32 border-4 border-blue-400 rounded-xl bg-blue-100/30 flex items-center justify-center shadow-[0_0_20px_rgba(96,165,250,0.5)]">
+                            <div class="w-4 h-4 bg-blue-600 rounded-full animate-ping"></div>
+                            <span class="absolute -top-8 right-0 bg-blue-600 text-white font-bold text-xs px-2 py-1 rounded whitespace-nowrap">Encoder 추천 위치 2</span>
+                        </div>
+                        
+                        <div class="absolute bottom-6 bg-white px-6 py-3 rounded-xl font-bold text-gray-800 shadow-md border border-gray-200">
+                            확률이 높은 곳에서만 쿼리 탐색 시작!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 8: DINO 해결책 3 Look Forward Twice -->
+        <div class="slide" data-slide="8">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 24.24%;"></div></div>
+                <div class="mb-4 text-emerald-600 font-bold text-lg">Part 1. DINO의 핵심 혁신</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">08. 해결책 3: Look Forward Twice</h2>
+                <div class="grid grid-cols-2 gap-10 h-full items-center">
+                    <div class="space-y-6">
+                        <p class="text-xl text-gray-700 leading-relaxed font-bold bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                            디코더의 여러 층(Layers)을 거치면서 네모 박스의 위치와 크기를 조금씩 더 정밀하게 다듬는 기술입니다.
+                        </p>
+                        <p class="text-lg text-gray-600 leading-relaxed font-medium px-2">
+                            기존 방식은 현재 층에서 박스를 수정할 때, 바로 이전 층의 결과물만 보고 수정했습니다.<br><br>
+                            하지만 DINO는 <strong>이전 층의 위치(좌표) 정보</strong>뿐만 아니라, 오차를 줄이기 위한 <strong>기울기(Gradient) 정보까지 두 번 참조(Look Forward Twice)</strong>하여 박스의 위치를 훨씬 더 부드럽고 섬세하게 수정합니다.
+                        </p>
+                    </div>
+                    <div class="native-graphic h-full min-h-[350px] relative bg-white border border-gray-200 shadow-sm flex items-center justify-center">
+                        <div class="text-8xl drop-shadow-md z-10">🚲</div>
+                        
+                        <!-- 레이어별 박스 진화 (크기 차이 확대 및 라벨 겹침 방지) -->
+                        <div class="absolute w-[85%] h-[85%] border-4 border-gray-300 rounded-3xl border-dashed opacity-50 z-20">
+                            <span class="absolute top-4 left-4 text-sm font-bold text-gray-600 bg-gray-100 px-3 py-1 rounded-lg border border-gray-300">Layer 1 (거침)</span>
+                        </div>
+                        
+                        <div class="absolute w-[60%] h-[60%] border-4 border-blue-400 rounded-2xl opacity-80 z-30">
+                            <span class="absolute bottom-4 right-4 text-sm font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-lg border border-blue-300">Layer 3 (수정됨)</span>
+                        </div>
+                        
+                        <div class="absolute w-[35%] h-[35%] border-4 border-emerald-500 rounded-xl shadow-lg z-40 bg-emerald-50/20">
+                            <span class="absolute -top-5 left-1/2 transform -translate-x-1/2 text-sm font-extrabold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-lg shadow-sm border border-emerald-300 whitespace-nowrap">Layer 6 (완벽 밀착)</span>
+                        </div>
+                        
+                        <!-- 미세조정 화살표 (반응형 퍼센트 기반) -->
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none z-50" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <marker id="redarrow2" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                    <polygon points="0 0, 10 3.5, 0 7" fill="#ef4444" />
+                                </marker>
+                            </defs>
+                            <!-- 바깥 박스에서 안쪽 박스로 향하는 화살표 -->
+                            <line x1="20%" y1="25%" x2="32%" y2="35%" stroke="#ef4444" stroke-width="4" marker-end="url(#redarrow2)"/>
+                            <line x1="80%" y1="75%" x2="68%" y2="65%" stroke="#ef4444" stroke-width="4" marker-end="url(#redarrow2)"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 9: DINO 요약 -->
+        <div class="slide" data-slide="9">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 27.27%;"></div></div>
+                <div class="mb-4 text-emerald-600 font-bold text-lg">Part 1. DINO의 결론</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">09. DINO 아키텍처 완성도 요약</h2>
+                <div class="flex flex-col items-center justify-center h-full gap-8">
+                    <p class="text-gray-700 text-xl font-bold bg-white px-8 py-4 rounded-2xl border border-gray-200 shadow-sm text-center">
+                        위 3가지 혁신을 모두 결합한 DINO는 <strong>DETR 계열 객체 탐지 모델의 최종 완성형(마스터피스)</strong>이 되었습니다.
+                    </p>
+                    
+                    <div class="native-graphic w-full max-w-4xl h-64 p-6 border border-gray-200 relative bg-gray-50 shadow-inner rounded-3xl">
+                        <div class="flex justify-between items-center w-full px-8 relative z-10 h-full">
+                            <!-- Image Input -->
+                            <div class="bg-white p-6 rounded-2xl border border-gray-300 text-center w-40 shadow-sm">
+                                <span class="text-5xl drop-shadow-sm">🖼️</span><br>
+                                <span class="text-base font-extrabold text-gray-700 mt-4 block">Image<br>Backbone</span>
+                            </div>
+                            <span class="text-4xl text-gray-400 self-center font-bold">➔</span>
+                            
+                            <!-- Encoder with Mixed Query -->
+                            <div class="bg-blue-50 border-2 border-blue-300 p-6 rounded-2xl text-center w-48 shadow-md relative">
+                                <span class="font-extrabold text-blue-800 text-lg block mb-2">Encoder</span>
+                                <span class="text-sm text-gray-600 font-bold">특징 추출 및<br>초기 좋은 위치 선별</span>
+                                <div class="absolute -bottom-5 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-full whitespace-nowrap shadow-sm">Mixed Query Selection</div>
+                            </div>
+                            <span class="text-4xl text-gray-400 self-center font-bold">➔</span>
+                            
+                            <!-- Decoder with CD & Look Forward -->
+                            <div class="bg-emerald-50 border-2 border-emerald-300 p-6 rounded-2xl text-center w-48 shadow-md relative">
+                                <span class="font-extrabold text-emerald-800 text-lg block mb-2">Decoder</span>
+                                <span class="text-sm text-gray-600 font-bold">박스 정밀 조정 및<br>최종 예측</span>
+                                <div class="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white text-[10px] font-bold px-3 py-1 rounded-full whitespace-nowrap shadow-sm">Contrastive DeNoising</div>
+                                <div class="absolute -bottom-5 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white text-[10px] font-bold px-3 py-1 rounded-full whitespace-nowrap shadow-sm">Look Forward Twice</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 10: DINO의 한계 (전환) -->
+        <div class="slide" data-slide="10">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 30.30%;"></div></div>
+                <div class="mb-4 text-emerald-600 font-bold text-lg">Part 1. DINO의 결론</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">10. DINO의 한계: "사전에 배운 것만 찾는다"</h2>
+                <div class="flex flex-col items-center justify-center h-full gap-10">
+                    <div class="bg-white p-10 rounded-3xl border-l-8 border-red-500 shadow-lg max-w-3xl text-center relative overflow-hidden">
+                        <div class="absolute -right-4 -top-4 text-9xl opacity-10">🚫</div>
+                        <h3 class="text-3xl font-extrabold text-gray-800 mb-6 relative z-10">성능은 최고지만, 여전히 Closed-set</h3>
+                        <p class="text-xl text-gray-600 leading-relaxed font-medium relative z-10">
+                            DINO는 기존 모델들의 문제(속도, 정확도)를 완벽히 해결하여 COCO 벤치마크 1위를 달성했습니다.<br><br>
+                            하지만, 모델이 미리 학습한 <strong>COCO의 80개 클래스(사람, 차, 강아지 등) 목록에 없는 새로운 물체</strong>를 사진에서 찾아달라고 하면 전혀 찾지 못하는 근본적인 한계가 여전히 남아있었습니다.
+                        </p>
+                    </div>
+                    
+                    <div class="text-gray-500 text-lg font-bold flex items-center gap-6 bg-gray-100 px-8 py-4 rounded-full border border-gray-200 shadow-sm mt-4">
+                        <span>이 완벽한 디텍터의 눈(Vision)에 언어(Language)를 더해주면 어떨까?</span>
+                        <span class="text-3xl text-blue-600 animate-bounce">➔ Part 2</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== PART 2: Grounding DINO ==================== -->
+
+        <!-- 슬라이드 11: Grounding DINO 인트로 -->
+        <div class="slide" data-slide="11">
+            <div class="glass-card justify-center items-center text-center">
+                <div class="progress-container"><div class="progress-bar" style="width: 33.33%;"></div></div>
+                <div class="mb-8 px-6 py-2 bg-blue-100 border border-blue-200 rounded-full text-blue-800 text-lg font-extrabold tracking-widest uppercase shadow-sm">Part 2. The Evolution</div>
+                <h2 class="text-7xl font-extrabold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 tracking-tight">Grounding DINO</h2>
+                <p class="text-3xl text-gray-700 max-w-4xl mb-12 font-bold leading-relaxed">
+                    Closed-set의 한계를 깨부수고, <br> 언어를 통해 세상 모든 물체(Open-set)를 탐지하다.
+                </p>
+                
+                <div class="native-graphic w-full max-w-3xl h-48 border border-gray-200 bg-white shadow-md flex items-center justify-center gap-12 rounded-3xl">
+                    <div class="flex flex-col items-center">
+                        <span class="bg-emerald-50 px-8 py-5 border-2 border-emerald-400 text-emerald-800 text-2xl font-extrabold rounded-2xl shadow-sm">DINO (완벽한 탐지기)</span>
+                        <span class="text-sm font-bold text-gray-500 mt-3">From Part 1</span>
+                    </div>
+                    <span class="text-5xl text-gray-400 font-extrabold">➕</span>
+                    <div class="flex flex-col items-center">
+                        <span class="bg-indigo-50 px-8 py-5 border-2 border-indigo-400 text-indigo-800 text-2xl font-extrabold rounded-2xl shadow-sm">Text (무한한 언어)</span>
+                        <span class="text-sm font-bold text-gray-500 mt-3">자유로운 프롬프트</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 12: Grounding 이란? -->
+        <div class="slide" data-slide="12">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 36.36%;"></div></div>
+                <div class="mb-4 text-blue-600 font-bold text-lg">1. Introduction</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">12. 핵심 개념: 'Grounding(정렬)' 이란 무엇인가?</h2>
+                <div class="grid grid-cols-2 gap-10 items-center h-full">
+                    <div class="space-y-8">
+                        <p class="text-xl text-gray-700 leading-relaxed font-bold">
+                            객체 탐지를 완전히 새로운 관점으로 재정의합니다.
+                        </p>
+                        <div class="bg-blue-50 p-8 border-l-8 border-blue-500 rounded-r-2xl shadow-sm space-y-6">
+                            <div>
+                                <h4 class="font-extrabold text-gray-500 text-lg mb-2 line-through">과거 (Detection)</h4>
+                                <p class="text-lg text-gray-500 font-medium">"사진에서 미리 배운 80개 물체 목록 중에 있는 것만 찾아내서 네모를 쳐라."</p>
+                            </div>
+                            <div>
+                                <h4 class="font-extrabold text-blue-800 text-xl mb-2">현재 (Phrase Grounding)</h4>
+                                <p class="text-xl text-blue-900 font-bold leading-relaxed">"사람이 입력한 문장 속 단어(Phrase)들이 사진의 어느 픽셀 구역(Box)에 해당하는지 1:1로 짝을 맞춰라(Grounding)."</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="native-graphic min-h-[400px] relative p-8 bg-white shadow-sm border border-gray-200 rounded-3xl">
+                        <!-- 독수리 그룹 -->
+                        <div class="absolute top-[15%] right-[15%] flex justify-center items-center">
+                            <div class="text-8xl drop-shadow-lg z-10">🦅</div>
+                            <div class="absolute w-32 h-32 border-4 border-yellow-400 rounded-2xl z-20 shadow-[0_0_15px_rgba(250,204,21,0.5)]"></div>
+                        </div>
+                        
+                        <!-- 나뭇가지 그룹 (렌더링 안정성을 위해 범용 이모지 적용) -->
+                        <div class="absolute top-[40%] left-[15%] flex justify-center items-center">
+                            <div class="text-8xl drop-shadow-lg z-10">🌿</div>
+                            <div class="absolute w-32 h-32 border-4 border-cyan-400 rounded-2xl z-20 shadow-[0_0_15px_rgba(6,182,212,0.5)]"></div>
+                        </div>
+                        
+                        <!-- 텍스트 설명 박스 -->
+                        <div class="absolute bottom-[10%] w-[90%] left-1/2 transform -translate-x-1/2 text-center z-30">
+                            <div class="bg-gray-800 px-6 py-4 rounded-2xl text-xl text-white inline-block shadow-xl font-bold tracking-wide border-2 border-gray-700 whitespace-nowrap">
+                                <span class="text-cyan-300 border-b-4 border-cyan-300 pb-1 px-2 relative" id="text-branch">나뭇가지</span> 위에 앉아 있는 <span class="text-yellow-300 border-b-4 border-yellow-300 pb-1 px-2 relative" id="text-eagle">독수리</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Connecting Lines (비율 기반으로 정확한 위치 연결) -->
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none z-0">
+                            <!-- 독수리 선 (오른쪽 텍스트에서 오른쪽 상단으로) -->
+                            <line x1="75%" y1="80%" x2="80%" y2="35%" stroke="#facc15" stroke-width="5" stroke-dasharray="8,6"/>
+                            <!-- 나뭇가지 선 (왼쪽 텍스트에서 왼쪽 중단으로) -->
+                            <line x1="25%" y1="80%" x2="20%" y2="55%" stroke="#67e8f9" stroke-width="5" stroke-dasharray="8,6"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 13: 왜 DINO 베이스인가 -->
+        <div class="slide" data-slide="13">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 39.39%;"></div></div>
+                <div class="mb-4 text-blue-600 font-bold text-lg">1. Introduction</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">13. 왜 GLIP 대신 DINO를 베이스로 선택했나?</h2>
+                <div class="space-y-8 h-full flex flex-col justify-center">
+                    <p class="text-xl text-gray-700 leading-relaxed font-bold text-center">
+                        사실 텍스트와 객체 탐지를 엮으려는 시도는 이전에도 있었습니다. 대표적인 것이 마이크로소프트의 <strong>GLIP</strong>입니다.
+                    </p>
+                    <div class="grid grid-cols-2 gap-10 mt-4">
+                        <div class="bg-white border border-gray-200 p-8 rounded-3xl shadow-md text-center flex flex-col justify-center">
+                            <h4 class="font-extrabold text-gray-500 text-2xl mb-4 line-through">GLIP의 한계</h4>
+                            <p class="text-lg text-gray-600 leading-relaxed font-medium">
+                                GLIP은 언어 결합에는 성공했지만, 탐지기의 뼈대로 과거 방식인 <strong>Faster R-CNN (Dynamic Head)</strong>을 사용했습니다. 이 방식은 복잡하고 이미지 전체의 문맥(Global context)을 보는 능력이 약합니다.
+                            </p>
+                        </div>
+                        <div class="bg-gradient-to-br from-cyan-50 to-blue-50 border border-blue-200 p-8 rounded-3xl shadow-lg text-center flex flex-col justify-center transform scale-105">
+                            <h4 class="font-extrabold text-blue-800 text-2xl mb-4">Grounding DINO의 통찰</h4>
+                            <p class="text-xl text-gray-800 leading-relaxed font-bold">
+                                "현재 객체 탐지 구조의 끝판왕은 트랜스포머 기반의 <strong>DINO</strong>다. 이 완벽한 뼈대(DINO)에 언어(Language)를 결혼시키면 성능이 폭발할 것이다!"
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 14: Architecture Overview -->
+        <div class="slide" data-slide="14">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 42.42%;"></div></div>
+                <div class="mb-4 text-cyan-600 font-bold text-lg">2. Architecture</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">14. 아키텍처 개요: 3단계 깊은 융합(Deep Fusion)</h2>
+                <div class="flex flex-col items-center justify-center h-full gap-8">
+                    <p class="text-gray-700 text-xl font-bold bg-white px-8 py-5 rounded-2xl shadow-sm border border-gray-200 w-full text-center">
+                        단순히 결과물만 비교하지 않습니다. Grounding DINO는 모델의 처음, 중간, 끝 모든 단계에서 시각과 언어를 끊임없이 섞어줍니다.
+                    </p>
+                    
+                    <div class="native-graphic w-full flex-grow p-8 border border-gray-200 relative bg-gray-50 shadow-inner rounded-3xl">
+                        <div class="flex justify-between w-full h-full relative z-10">
+                            <!-- Vision Stream -->
+                            <div class="flex flex-col justify-around w-1/4">
+                                <div class="bg-white p-6 rounded-2xl text-center text-xl text-gray-800 border-2 border-gray-300 font-extrabold shadow-sm">Image Backbone<br><span class="text-sm font-medium text-gray-500 mt-2 block">(Swin Transformer)</span></div>
+                            </div>
+                            
+                            <!-- Fusion Center -->
+                            <div class="flex flex-col justify-center items-center w-2/5 gap-6">
+                                <div class="bg-cyan-100 p-5 rounded-2xl text-center text-cyan-900 border-2 border-cyan-400 w-full shadow-md">
+                                    <span class="font-extrabold text-xl">Phase 1: Feature Enhancer</span>
+                                    <span class="block text-sm mt-1 text-cyan-700 font-bold">초기 융합</span>
+                                </div>
+                                <div class="bg-blue-100 p-5 rounded-2xl text-center text-blue-900 border-2 border-blue-400 w-full shadow-md">
+                                    <span class="font-extrabold text-xl">Phase 2: Query Selection</span>
+                                    <span class="block text-sm mt-1 text-blue-700 font-bold">중기 융합</span>
+                                </div>
+                                <div class="bg-indigo-100 p-5 rounded-2xl text-center text-indigo-900 border-2 border-indigo-400 w-full shadow-md">
+                                    <span class="font-extrabold text-xl">Phase 3: Decoder</span>
+                                    <span class="block text-sm mt-1 text-indigo-700 font-bold">후기 융합</span>
+                                </div>
+                            </div>
+
+                            <!-- Text Stream -->
+                            <div class="flex flex-col justify-around w-1/4">
+                                <div class="bg-white p-6 rounded-2xl text-center text-xl text-gray-800 border-2 border-gray-300 font-extrabold shadow-sm">Text Backbone<br><span class="text-sm font-medium text-gray-500 mt-2 block">(BERT)</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 15: Architecture 전체 구조 시각화 (이미지) -->
+        <div class="slide" data-slide="15">
+            <div class="glass-card flex flex-col items-center justify-center">
+                <div class="progress-container"><div class="progress-bar" style="width: 45.45%;"></div></div>
+                <div class="flex flex-col items-center justify-center w-full h-full">
+                    <img src="./images/model_overall.png" alt="Grounding DINO Architecture" class="mx-auto my-6 rounded-2xl border-2 border-gray-200 shadow-lg" style="max-width: 950px; width: 90vw; height: auto; object-fit: contain; background: #fff;" />
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 16: Dual Backbones Intro -->
+        <div class="slide" data-slide="16">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 48.48%;"></div></div>
+                <div class="mb-4 text-cyan-600 font-bold text-lg">2. Architecture</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">16. Dual Backbones (특징 추출기)</h2>
+                <div class="grid grid-cols-2 gap-10 h-full items-center">
+                    <div class="bg-white p-8 rounded-2xl border-t-8 border-cyan-400 shadow-md h-full flex flex-col justify-center">
+                        <div class="text-6xl mb-6 text-center drop-shadow-md">🖼️</div>
+                        <h4 class="font-extrabold text-cyan-800 text-2xl mb-4 text-center">Image Backbone</h4>
+                        <p class="text-lg text-gray-700 leading-relaxed font-medium text-center">
+                            이미지의 픽셀 데이터를 분석하여 컴퓨터가 이해할 수 있는 벡터(Feature)로 변환하는 시각 엔진입니다. <br><br>
+                            Grounding DINO는 강력한 <strong>Swin Transformer</strong>를 사용하여 이미지를 여러 크기(Multi-scale)로 쪼개어 분석합니다.
+                        </p>
+                    </div>
+                    
+                    <div class="bg-white p-8 rounded-2xl border-t-8 border-purple-400 shadow-md h-full flex flex-col justify-center">
+                        <div class="text-6xl mb-6 text-center drop-shadow-md">💬</div>
+                        <h4 class="font-extrabold text-purple-800 text-2xl mb-4 text-center">Text Backbone</h4>
+                        <p class="text-lg text-gray-700 leading-relaxed font-medium text-center">
+                            사용자가 입력한 프롬프트 문장을 단어(토큰) 단위로 쪼개고, 그 의미를 벡터로 변환하는 언어 엔진입니다. <br><br>
+                            자연어 처리의 혁명을 일으킨 <strong>BERT (Bidirectional Encoder Representations from Transformers)</strong> 모델을 사용합니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 17: Swin Transformer Deep Dive -->
+        <div class="slide" data-slide="17">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 51.51%;"></div></div>
+                <div class="mb-4 text-cyan-600 font-bold text-lg">2. Architecture - Deep Dive</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">17. Image Backbone: Swin Transformer</h2>
+                <div class="grid grid-cols-2 gap-10 h-full items-center">
+                    <div class="space-y-6">
+                        <p class="text-xl text-gray-700 leading-relaxed font-bold bg-cyan-50 p-6 rounded-2xl border border-cyan-200 shadow-sm">
+                            비전 트랜스포머(ViT)의 연산 한계를 극복하기 위해 제안된 <strong>계층적(Hierarchical) 트랜스포머</strong>입니다.
+                        </p>
+                        <ul class="space-y-4 text-lg text-gray-700 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                            <li><strong>Local Windows:</strong> 이미지 전체를 한 번에 보지 않고, 여러 개의 작은 창(Window)으로 쪼개어 창 안에서만 Attention 연산을 수행해 속도를 극대화합니다.</li>
+                            <li><strong>Shifted Windows:</strong> 다음 층에서는 창의 위치를 살짝 이동(Shift)시켜 창과 창 사이의 경계 부분 정보도 교류하게 만듭니다.</li>
+                            <li><strong>Multi-scale:</strong> 층이 깊어질수록 창을 병합하여 점점 더 넓은 숲(Global Context)을 봅니다. 크기가 작은 객체부터 큰 객체까지 완벽히 포착합니다.</li>
+                        </ul>
+                    </div>
+                    <div class="native-graphic h-full min-h-[350px] relative bg-white border border-gray-200 shadow-md p-6 rounded-3xl flex flex-col justify-center items-center gap-6">
+                        <div class="text-center font-bold text-gray-500 mb-2">Shifted Window Mechanism</div>
+                        <div class="relative w-48 h-48 border-4 border-gray-300 rounded-lg grid grid-cols-2 gap-1 p-1">
+                            <!-- Regular Window -->
+                            <div class="bg-blue-100 border-2 border-blue-400 rounded-sm"></div>
+                            <div class="bg-blue-100 border-2 border-blue-400 rounded-sm"></div>
+                            <div class="bg-blue-100 border-2 border-blue-400 rounded-sm"></div>
+                            <div class="bg-blue-100 border-2 border-blue-400 rounded-sm"></div>
+                            
+                            <!-- Shifted Window Overlay -->
+                            <div class="absolute inset-0 m-6 border-4 border-red-400 border-dashed rounded-lg bg-red-400/20 shadow-[0_0_15px_rgba(248,113,113,0.5)] flex items-center justify-center">
+                                <span class="text-xs font-bold text-red-800 bg-red-100 px-2 rounded">Shifted!</span>
+                            </div>
+                        </div>
+                                <span class="text-xs font-bold text-red-800 bg-red-100 px-2 rounded">Shifted!</span>
+                            </div>
+                        </div>
+                        <p class="text-sm font-bold text-gray-600 text-center">창(Window)을 이동시켜가며 <br>국소적 특징과 전역적 특징을 모두 파악</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 18: BERT Deep Dive -->
+        <div class="slide" data-slide="18">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 54.54%;"></div></div>
+                <div class="mb-4 text-cyan-600 font-bold text-lg">2. Architecture - Deep Dive</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">18. Text Backbone: BERT</h2>
+                <div class="grid grid-cols-2 gap-10 h-full items-center">
+                    <div class="space-y-6">
+                        <p class="text-xl text-gray-700 leading-relaxed font-bold bg-purple-50 p-6 rounded-2xl border border-purple-200 shadow-sm">
+                            문맥의 의미를 <strong>양방향(Bidirectional)</strong>으로 완벽하게 이해하는 자연어 처리 모델의 표준입니다.
+                        </p>
+                        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                            <h4 class="font-extrabold text-purple-700 text-xl">문맥 의존적 단어 이해</h4>
+                            <p class="text-lg text-gray-600 leading-relaxed font-medium">
+                                "사과"라는 단어가 '먹는 사과(Apple)'인지 '용서(Apology)'인지 알려면 문장 전체를 봐야 합니다. <br><br>
+                                BERT는 순차적으로 단어를 읽는 기존 방식과 달리, <strong>문장 전체를 한 번에 입력받아 앞뒤 단어들의 관계(Self-Attention)를 동시에 분석</strong>하여 해당 단어의 '진짜 의미'가 담긴 벡터를 생성해 냅니다.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="native-graphic h-full min-h-[350px] relative bg-white border border-gray-200 shadow-md p-8 rounded-3xl flex flex-col justify-center">
+                        <div class="flex justify-between items-center w-full mb-8 text-xl font-bold text-gray-700">
+                            <span class="bg-gray-100 p-3 rounded-lg border border-gray-300">책상</span>
+                            <span class="bg-gray-100 p-3 rounded-lg border border-gray-300">위의</span>
+                            <span class="bg-purple-100 text-purple-800 p-4 rounded-xl border-2 border-purple-400 shadow-lg transform scale-110">노트북</span>
+                            <span class="bg-gray-100 p-3 rounded-lg border border-gray-300">과</span>
+                            <span class="bg-gray-100 p-3 rounded-lg border border-gray-300">커피</span>
+                        </div>
+                        
+                        <!-- Attention Arrows -->
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M 120 180 Q 250 100 350 180" fill="none" stroke="#a855f7" stroke-width="3" stroke-dasharray="4,4"/>
+                            <path d="M 450 180 Q 380 120 350 180" fill="none" stroke="#a855f7" stroke-width="3" stroke-dasharray="4,4"/>
+                        </svg>
+
+                        <div class="text-center mt-6">
+                            <p class="text-base font-extrabold text-purple-700 bg-purple-50 inline-block px-6 py-3 rounded-full border border-purple-200 shadow-sm">양방향 문맥을 모두 참조하여 단어의 의미 확정</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 19: Phase 1 -->
+        <div class="slide" data-slide="19">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 57.57%;"></div></div>
+                <div class="mb-4 text-cyan-600 font-bold text-lg">2. Architecture</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">19. Phase 1: Feature Enhancer (초기 융합)</h2>
+                <div class="grid grid-cols-2 gap-10 h-full items-center">
+                    <div class="space-y-8 text-lg text-gray-700 font-medium">
+                        <p class="font-bold text-xl leading-relaxed">
+                            각 백본에서 특징을 뽑아내자마자, 시각 벡터와 언어 벡터를 <strong>교차(Cross)</strong>시켜 서로의 맥락을 깊게 반영합니다.
+                        </p>
+                        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                            <div class="flex items-start gap-4">
+                                <span class="bg-cyan-100 text-cyan-700 px-3 py-1 rounded-lg font-extrabold">1</span>
+                                <p class="leading-relaxed"><strong>Self-Attention:</strong> 이미지 내부 픽셀끼리, 텍스트 단어끼리 문맥 파악</p>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-lg font-extrabold">2</span>
+                                <p class="leading-relaxed"><strong>Cross-Attention:</strong> 이미지가 텍스트를 참조하고, 텍스트가 이미지를 참조함 (Bi-directional)</p>
+                            </div>
+                        </div>
+                        <p class="text-blue-600 font-extrabold bg-blue-50 p-4 rounded-xl text-center border border-blue-200">
+                            결과: 서로의 특징이 물든(Enhanced) 강력한 벡터 탄생!
+                        </p>
+                    </div>
+                    <div class="native-graphic h-full min-h-[350px] relative text-xl bg-white border border-gray-200 shadow-md p-8 flex flex-col justify-between rounded-3xl">
+                        <div class="flex justify-between items-center w-full mt-4">
+                            <span class="bg-gray-100 text-gray-800 border border-gray-300 px-6 py-4 rounded-xl font-extrabold shadow-sm">Vision<br>Features</span>
+                            <span class="text-5xl text-blue-500">↔️</span>
+                            <span class="bg-gray-100 text-gray-800 border border-gray-300 px-6 py-4 rounded-xl font-extrabold shadow-sm">Text<br>Features</span>
+                        </div>
+                        
+                        <div class="w-full bg-cyan-50 border-2 border-cyan-400 p-6 rounded-2xl text-center shadow-inner relative my-4">
+                            <span class="font-extrabold text-cyan-800 text-2xl block mb-2">Cross-Modality Attention</span>
+                            <span class="text-base text-gray-600 font-bold">이미지와 단어가 서로를 미리 확인</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center w-full mb-4">
+                            <span class="bg-cyan-500 text-white px-6 py-4 rounded-xl font-extrabold shadow-lg text-lg">Enhanced<br>Vision</span>
+                            <span class="bg-purple-500 text-white px-6 py-4 rounded-xl font-extrabold shadow-lg text-lg">Enhanced<br>Text</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 20: Phase 2 -->
+        <div class="slide" data-slide="20">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 60.60%;"></div></div>
+                <div class="mb-4 text-cyan-600 font-bold text-lg">2. Architecture</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">20. Phase 2: Language-Guided Query Selection</h2>
+                <div class="space-y-8">
+                    <p class="text-2xl text-gray-800 leading-relaxed font-extrabold bg-blue-50 p-8 rounded-2xl border border-blue-200 shadow-sm text-center">
+                        이 논문이 자랑하는 최고의 혁신입니다. <br>디코더에 들어갈 "탐색의 출발점(초기 쿼리)"을 텍스트 기반으로 정합니다.
+                    </p>
+                    <div class="grid grid-cols-2 gap-12 mt-8">
+                        <div class="bg-white p-8 rounded-3xl border border-gray-200 shadow-md">
+                            <h4 class="font-extrabold text-gray-500 text-2xl mb-6 text-center line-through">Part 1의 일반 DINO</h4>
+                            <p class="text-xl text-gray-600 leading-relaxed font-medium">
+                                입력된 텍스트가 무엇이든 상관하지 않습니다. 그저 특징 맵을 보고 '어떤 물체든 있을 법한' 박스들을 상위 확률순으로 무작위로 뽑아 쿼리로 삼았습니다.
+                            </p>
+                        </div>
+                        <div class="bg-cyan-50 p-8 rounded-3xl border-2 border-cyan-400 shadow-lg relative transform scale-105">
+                            <h4 class="font-extrabold text-cyan-800 text-2xl mb-6 text-center">Grounding DINO</h4>
+                            <p class="text-xl text-gray-800 leading-relaxed font-bold">
+                                <strong>텍스트 특징 벡터</strong>와 이미지 특징 벡터 간의 내적(유사도)을 계산합니다. 사용자가 입력한 프롬프트 단어와 <strong>의미적으로 가장 비슷한 이미지 좌표들만을 엄선</strong>하여 쿼리로 초기화합니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 21: Query Selection 시각화 -->
+        <div class="slide" data-slide="21">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 63.63%;"></div></div>
+                <div class="mb-4 text-cyan-600 font-bold text-lg">2. Architecture</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">21. 일반 DINO와의 쿼리 생성 방식 비교</h2>
+                <div class="grid grid-cols-2 gap-12 h-full items-center">
+                    <!-- 일반 DINO -->
+                    <div class="native-graphic flex-col h-[400px] relative bg-white border border-gray-200 shadow-sm p-6 rounded-3xl">
+                        <h4 class="absolute top-6 left-6 font-extrabold text-gray-600 bg-gray-100 px-4 py-2 rounded-lg shadow-sm z-30 text-lg">일반 DINO 초기화</h4>
+                        
+                        <div class="absolute top-1/3 left-1/3 flex justify-center items-center transform -translate-x-1/2 -translate-y-1/2">
+                            <div class="text-8xl drop-shadow-md z-10">🍎</div>
+                            <div class="absolute w-32 h-32 border-4 border-gray-400 rounded-2xl z-20"></div>
+                        </div>
+                        
+                        <div class="absolute bottom-1/3 right-1/4 flex justify-center items-center">
+                            <div class="text-8xl drop-shadow-md grayscale opacity-40 z-10">🍌</div>
+                            <div class="absolute w-28 h-28 border-4 border-gray-400 rounded-2xl z-20"></div>
+                        </div>
+                        
+                        <div class="absolute top-1/4 right-1/4 w-24 h-24 border-4 border-gray-400 rounded-2xl z-20"></div>
+                        
+                        <span class="absolute bottom-8 bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-bold text-base z-30 border border-gray-300 shadow-sm">입력어 무관, 객체성(Objectness)만 판단</span>
+                    </div>
+
+                    <!-- Grounding DINO -->
+                    <div class="native-graphic flex-col h-[400px] relative bg-cyan-50/30 border-2 border-cyan-400 shadow-lg p-6 rounded-3xl">
+                        <h4 class="absolute top-6 left-6 font-extrabold text-cyan-800 bg-cyan-100 border border-cyan-300 px-4 py-2 rounded-lg shadow-sm z-30 text-lg">Language-Guided 초기화</h4>
+                        <div class="absolute top-6 right-6 bg-gray-900 text-white px-5 py-2 rounded-lg font-bold text-base z-30 shadow-md">Query: "사과"</div>
+                        
+                        <!-- 사과 타겟 (완벽 정렬) -->
+                        <div class="absolute top-1/3 left-1/3 flex justify-center items-center transform -translate-x-1/2 -translate-y-1/2">
+                            <div class="text-8xl drop-shadow-md z-10">🍎</div>
+                            <div class="absolute w-32 h-32 border-4 border-cyan-500 rounded-2xl shadow-[0_0_30px_rgba(6,182,212,0.6)] animate-pulse z-20"></div>
+                        </div>
+                        
+                        <!-- 바나나는 선택 안됨 -->
+                        <div class="absolute bottom-1/3 right-1/4 flex justify-center items-center">
+                            <div class="text-8xl drop-shadow-md grayscale opacity-30 z-10">🍌</div>
+                        </div>
+                        
+                        <span class="absolute bottom-8 bg-cyan-600 text-white px-6 py-3 rounded-xl font-bold text-base shadow-md border border-cyan-500 z-30 text-center w-[80%]">텍스트(사과)와 일치하는 위치에서만 시작 🎯</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 22: Phase 3 Decoder -->
+        <div class="slide" data-slide="22">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 66.66%;"></div></div>
+                <div class="mb-4 text-cyan-600 font-bold text-lg">2. Architecture</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">22. Phase 3: Cross-Modality Decoder</h2>
+                <div class="flex flex-col gap-10 h-full">
+                    <p class="text-gray-700 text-xl font-bold bg-white p-6 rounded-2xl border border-gray-200 shadow-sm leading-relaxed text-center">
+                        텍스트가 콕 찍어준 최적의 초기 위치에서 탐색을 시작한 쿼리들은, <strong>디코더(Decoder)</strong> 층을 거치며 박스를 정밀하게 완성합니다.
+                    </p>
+                    <div class="native-graphic flex-grow bg-white p-12 flex items-center justify-around border border-gray-200 shadow-inner rounded-3xl">
+                        <div class="flex flex-col items-center gap-6 w-2/5">
+                            <div class="bg-purple-50 p-8 rounded-3xl border-2 border-purple-300 w-full text-center shadow-md relative">
+                                <span class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-purple-500 text-white font-bold text-sm px-4 py-1 rounded-full shadow-sm">Layer 1, 2, 3...</span>
+                                <span class="font-extrabold text-purple-800 text-2xl block mb-4 mt-2">Text Cross-Attention</span>
+                                <span class="text-lg text-gray-700 font-bold">"프롬프트 단어의 의미 재확인"</span>
+                            </div>
+                        </div>
+                        <span class="text-6xl text-gray-400 font-extrabold">🔄</span>
+                        <div class="flex flex-col items-center gap-6 w-2/5">
+                            <div class="bg-cyan-50 p-8 rounded-3xl border-2 border-cyan-300 w-full text-center shadow-md relative">
+                                <span class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-cyan-500 text-white font-bold text-sm px-4 py-1 rounded-full shadow-sm">Layer 1, 2, 3...</span>
+                                <span class="font-extrabold text-cyan-800 text-2xl block mb-4 mt-2">Image Cross-Attention</span>
+                                <span class="text-lg text-gray-700 font-bold">"시각적 경계(BBox) 정밀 조정"</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xl text-gray-500 text-center font-extrabold">디코더 안에서도 시각과 언어가 반복적으로 교류하며 1:1 Grounding을 확정 짓습니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 23: Training Loss -->
+        <div class="slide" data-slide="23">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 69.69%;"></div></div>
+                <div class="mb-4 text-indigo-600 font-bold text-lg">3. Methodology & Training</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">23. 학습 방법 (Loss Functions)</h2>
+                <div class="grid grid-cols-1 gap-10 h-full items-center">
+                    <p class="text-2xl text-gray-700 font-bold px-2">모델이 정답을 맞히도록 훈련시키기 위해 크게 두 가지의 손실 함수(Loss)를 계산합니다.</p>
+                    
+                    <div class="bg-white border-l-8 border-indigo-500 p-8 rounded-2xl shadow-md">
+                        <h4 class="font-extrabold text-indigo-900 text-2xl mb-4">1. Contrastive Loss (대조 손실)</h4>
+                        <p class="text-lg text-gray-700 leading-relaxed font-medium">
+                            전통적인 객체 탐지의 '클래스 분류기(Classifier)' 역할을 대신합니다. 예측된 <strong>이미지 박스 안의 픽셀 벡터</strong>와 해당 영역을 설명하는 <strong>단어(Text Token) 벡터</strong> 사이의 거리를 계산합니다. <br>올바른 짝(사과 이미지-사과 단어)은 당기고, 틀린 짝은 밀어냅니다.
+                        </p>
+                    </div>
+
+                    <div class="bg-white border-l-8 border-emerald-500 p-8 rounded-2xl shadow-md">
+                        <h4 class="font-extrabold text-emerald-900 text-2xl mb-4">2. Bounding Box Loss (L1 + GIoU)</h4>
+                        <p class="text-lg text-gray-700 leading-relaxed font-medium">
+                            일반적인 DINO나 DETR 계열과 동일합니다. <strong>L1 Loss(중심 좌표 오차)</strong>와 <strong>GIoU Loss(영역 겹침 비율)</strong>를 사용하여 예측된 네모 박스의 크기와 위치가 실제 정답 박스에 100% 포개어지도록 훈련합니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 24: Sub-Sentence Grounding -->
+        <div class="slide" data-slide="24">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 72.72%;"></div></div>
+                <div class="mb-4 text-indigo-600 font-bold text-lg">3. Methodology & Training</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">24. 핵심 기능 1: 하위 문장(Sub-sentence) 정렬</h2>
+                <div class="grid grid-cols-2 gap-10 h-full items-center">
+                    <div class="space-y-8 text-lg text-gray-700 font-medium">
+                        <p class="leading-relaxed font-bold text-xl">논문의 핵심 기여 중 하나입니다. Grounding DINO는 전체 문장 하나를 하나의 객체로 통째로 묶지 않습니다.</p>
+                        <div class="bg-gray-50 p-8 border border-gray-200 rounded-2xl shadow-sm">
+                            <strong class="text-gray-900 block mb-4 text-2xl">입력: "책상 위 노트북과 커피잔"</strong>
+                            <p class="text-lg text-gray-700 leading-relaxed font-bold mt-4">
+                                모델은 문장을 <strong>토큰(Token) 단위</strong>로 쪼개어, 문장 내에 포함된 <strong>여러 개의 하위 명사(Sub-sentences)</strong>들을 각각 개별적인 Bounding Box와 따로따로 매칭(Grounding)시킵니다.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="native-graphic h-full min-h-[400px] relative bg-white border border-gray-200 shadow-md p-6 rounded-3xl">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <!-- Desk Box containing elements -->
+                            <div class="relative w-[85%] h-[60%] bg-amber-50 border-4 border-amber-500 rounded-3xl shadow-sm flex items-end justify-center pb-12 gap-10">
+                                <span class="absolute -top-6 left-6 text-base font-extrabold text-amber-800 bg-amber-100 border border-amber-300 px-4 py-1.5 rounded-lg shadow-sm">"책상" ➔ Box 1</span>
+
+                                <!-- Laptop Wrapper -->
+                                <div class="relative flex items-center justify-center mb-6">
+                                    <div class="text-8xl drop-shadow-md z-10">💻</div>
+                                    <div class="absolute w-36 h-32 border-4 border-blue-500 rounded-2xl z-20 shadow-sm">
+                                        <span class="absolute -top-7 left-1/2 transform -translate-x-1/2 text-sm font-extrabold text-blue-800 bg-blue-100 border border-blue-300 px-3 py-1 rounded-lg whitespace-nowrap shadow-sm">"노트북" ➔ Box 2</span>
+                                    </div>
+                                </div>
+
+                                <!-- Cup Wrapper -->
+                                <div class="relative flex items-center justify-center mb-6">
+                                    <div class="text-7xl drop-shadow-md z-10">☕</div>
+                                    <div class="absolute w-28 h-28 border-4 border-emerald-500 rounded-2xl z-20 shadow-sm">
+                                        <span class="absolute -top-7 left-1/2 transform -translate-x-1/2 text-sm font-extrabold text-emerald-800 bg-emerald-100 border border-emerald-300 px-3 py-1 rounded-lg whitespace-nowrap shadow-sm">"커피잔" ➔ Box 3</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 25: Multiple Entities -->
+        <div class="slide" data-slide="25">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 75.75%;"></div></div>
+                <div class="mb-4 text-indigo-600 font-bold text-lg">3. Methodology & Training</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">25. 핵심 기능 2: 복수 개체 (Multiple Entities) 처리</h2>
+                <div class="grid grid-cols-2 gap-10 h-full items-center">
+                    <div class="space-y-8 text-lg text-gray-700 font-medium">
+                        <p class="leading-relaxed bg-indigo-50 p-6 rounded-2xl border border-indigo-200 shadow-sm font-bold text-xl text-indigo-900">
+                            만약 이미지에 똑같은 개가 2마리 있고, 프롬프트가 <strong>"두 마리의 개"</strong>라면 어떻게 될까요?
+                        </p>
+                        <p class="leading-relaxed px-2 text-gray-600 text-lg font-bold">
+                            Contrastive Loss 학습의 마법 덕분에, 단어 '개'라는 텍스트 토큰은 이미지 내의 첫 번째 개 픽셀과도 유사도가 높게 계산되고, 두 번째 개 픽셀과도 유사도가 높게 계산됩니다. <br><br>
+                            결과적으로 <strong>'개'라는 1개의 단어가 여러 개의 독립적인 바운딩 박스를 동시에 생성해내는 1:N 매칭</strong>이 자연스럽게 이루어집니다.
+                        </p>
+                    </div>
+                    <div class="native-graphic h-full min-h-[400px] relative bg-gray-50 border border-gray-200 shadow-md p-6 rounded-3xl">
+                        <!-- Dog 1 Wrapper -->
+                        <div class="absolute top-1/4 left-1/4 flex items-center justify-center transform -translate-x-1/2">
+                            <div class="text-8xl drop-shadow-md z-10">🐕</div>
+                            <div class="absolute w-40 h-40 border-4 border-indigo-500 rounded-3xl shadow-sm z-20"></div>
+                        </div>
+
+                        <!-- Dog 2 Wrapper -->
+                        <div class="absolute bottom-1/4 right-1/4 flex items-center justify-center transform translate-x-1/2">
+                            <div class="text-8xl drop-shadow-md z-10">🐕</div>
+                            <div class="absolute w-40 h-40 border-4 border-indigo-500 rounded-3xl shadow-sm z-20"></div>
+                        </div>
+                        
+                        <!-- Center Token -->
+                        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-indigo-600 text-white font-extrabold px-8 py-4 rounded-full text-2xl shadow-xl z-30 whitespace-nowrap">
+                            Token: "개"
+                        </div>
+                        
+                        <!-- connecting arrows -->
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none z-0">
+                            <path d="M 50% 50% L 20% 25%" stroke="#6366f1" stroke-width="5" stroke-dasharray="8,6"/>
+                            <path d="M 50% 50% L 80% 75%" stroke="#6366f1" stroke-width="5" stroke-dasharray="8,6"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 26: Datasets -->
+        <div class="slide" data-slide="26">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 78.78%;"></div></div>
+                <div class="mb-4 text-purple-600 font-bold text-lg">4. Experiments & Conclusion</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">26. Training Datasets (데이터셋 구축)</h2>
+                <p class="text-xl text-gray-700 mb-10 font-bold">막강한 Open-set 성능은 알고리즘뿐만 아니라 방대한 스케일의 고품질 데이터에서 나옵니다.</p>
+                <div class="grid grid-cols-3 gap-10">
+                    <div class="bg-white p-10 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md transition text-center flex flex-col items-center">
+                        <div class="text-6xl mb-6">🗂️</div>
+                        <h4 class="font-extrabold text-gray-800 text-2xl mb-4">O365</h4>
+                        <p class="text-lg text-gray-600 font-medium leading-relaxed">Objects365 데이터셋.<br>수많은 클래스가 포함된 방대한 바운딩 박스 데이터.</p>
+                    </div>
+                    <div class="bg-white p-10 rounded-3xl border-t-8 border-yellow-400 shadow-md hover:shadow-lg transition text-center flex flex-col items-center transform scale-105">
+                        <div class="text-6xl mb-6">🥇</div>
+                        <h4 class="font-extrabold text-yellow-600 text-2xl mb-4">GoldG</h4>
+                        <p class="text-lg text-gray-700 font-bold leading-relaxed">Flickr30k, VG 등 인간이 직접 박스와 단어를 1:1로 정밀하게 매칭한 최고품질 데이터.</p>
+                    </div>
+                    <div class="bg-white p-10 rounded-3xl border border-gray-200 shadow-sm hover:shadow-md transition text-center flex flex-col items-center">
+                        <div class="text-6xl mb-6">🌐</div>
+                        <h4 class="font-extrabold text-blue-600 text-2xl mb-4">Cap4K</h4>
+                        <p class="text-lg text-gray-600 font-medium leading-relaxed">웹에서 수집된 이미지-캡션 쌍에 Pseudo label(가짜 정답)을 생성하여 스케일 확장.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 27: Zero-Shot Performance -->
+        <div class="slide" data-slide="27">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 81.81%;"></div></div>
+                <div class="mb-4 text-purple-600 font-bold text-lg">4. Experiments & Conclusion</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">27. Zero-Shot 성능 평가 (vs GLIP)</h2>
+                <div class="grid grid-cols-2 gap-12 h-full items-center">
+                    <div class="space-y-8">
+                        <p class="text-xl text-gray-700 leading-relaxed font-bold bg-purple-50 p-6 rounded-2xl border border-purple-200 shadow-sm">
+                            단 한 번도 본 적 없는 데이터셋(COCO, LVIS)에 대해 추가 학습 없이(Zero-shot) 테스트한 결과입니다.
+                        </p>
+                        <p class="text-xl text-gray-700 leading-relaxed font-medium px-2">
+                            비슷한 크기의 백본(Swin-T)을 가진 라이벌 모델 GLIP-T와 비교했을 때, Grounding DINO는 <strong>COCO에서 52.5 AP (+9.6 AP 압승)</strong>, <strong>LVIS에서 29.6 AP (+3.6 AP 상승)</strong>라는 엄청난 성능 차이를 보여주었습니다.
+                        </p>
+                    </div>
+                    <!-- Chart Graphic -->
+                    <div class="native-graphic h-full min-h-[350px] flex items-end justify-center gap-16 pb-12 relative bg-white border border-gray-200 shadow-sm rounded-3xl">
+                        <span class="absolute top-6 left-6 text-lg font-extrabold text-gray-600 bg-gray-100 px-4 py-2 rounded-lg shadow-sm border border-gray-200">COCO Zero-Shot AP 비교</span>
+                        
+                        <div class="flex flex-col items-center gap-4 z-10 w-28">
+                            <div class="w-full bg-gray-400 rounded-t-xl shadow-sm" style="height: 160px;"></div>
+                            <span class="text-lg font-bold text-gray-700 text-center">GLIP-T<br>(42.9)</span>
+                        </div>
+                        <div class="flex flex-col items-center gap-4 z-10 w-28">
+                            <div class="w-full bg-purple-600 rounded-t-xl shadow-lg relative" style="height: 260px;">
+                                <span class="absolute -top-10 left-1/2 transform -translate-x-1/2 text-base font-extrabold text-red-600 bg-red-50 px-3 py-1 rounded-lg shadow-md whitespace-nowrap border border-red-200">+ 9.6 AP 폭등!</span>
+                            </div>
+                            <span class="text-xl font-extrabold text-purple-800 bg-purple-100 px-3 py-1 rounded-lg border border-purple-300 text-center">G-DINO<br>(52.5)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 28: Ablation Study -->
+        <div class="slide" data-slide="28">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 84.84%;"></div></div>
+                <div class="mb-4 text-purple-600 font-bold text-lg">4. Experiments & Conclusion</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">28. Ablation Study (어떤 기술이 가장 중요했을까?)</h2>
+                <div class="space-y-8">
+                    <p class="text-xl text-gray-700 font-bold">3단계 융합 아키텍처 중, 어떤 구성 요소가 성능을 가장 크게 끌어올렸을까요? (논문 Table 5)</p>
+                    <div class="grid grid-cols-1 gap-8">
+                        <div class="bg-white border-l-8 border-cyan-500 p-6 rounded-2xl shadow-sm flex items-center justify-between">
+                            <div class="w-2/3">
+                                <h4 class="font-extrabold text-gray-800 text-xl mb-2">1. Text Cross-Attention in Decoder (후기 융합 제거)</h4>
+                                <p class="text-lg text-gray-600 font-medium">디코더 단계에서 텍스트 확인 과정을 없앴을 때</p>
+                            </div>
+                            <span class="text-xl font-extrabold text-red-500 bg-red-50 px-4 py-2 rounded-lg border border-red-100">- 1.2 AP 하락</span>
+                        </div>
+                        
+                        <div class="bg-white border-l-8 border-blue-500 p-6 rounded-2xl shadow-sm flex items-center justify-between">
+                            <div class="w-2/3">
+                                <h4 class="font-extrabold text-gray-800 text-xl mb-2">2. Feature Enhancer (초기 융합 제거)</h4>
+                                <p class="text-lg text-gray-600 font-medium">백본 직후 시각-언어가 섞이는 초기 모듈을 없앴을 때</p>
+                            </div>
+                            <span class="text-xl font-extrabold text-red-500 bg-red-50 px-4 py-2 rounded-lg border border-red-100">- 3.1 AP 하락</span>
+                        </div>
+
+                        <div class="bg-white border-l-8 border-indigo-600 p-8 rounded-2xl shadow-md flex items-center justify-between transform scale-[1.02]">
+                            <div class="w-2/3">
+                                <h4 class="font-extrabold text-indigo-900 text-2xl mb-2">3. Language-Guided Query Selection (중기 융합 제거)</h4>
+                                <p class="text-lg text-gray-700 font-bold">텍스트 기반의 출발점 탐색을 없애고, 일반 DINO처럼 무작위로 시작했을 때</p>
+                            </div>
+                            <span class="text-3xl font-extrabold text-red-600 bg-red-100 px-6 py-3 rounded-xl border border-red-300 shadow-sm">- 4.4 AP 급락 🚨</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 29: 실전 추론 시각화 -->
+        <div class="slide" data-slide="29">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 87.87%;"></div></div>
+                <div class="mb-4 text-purple-600 font-bold text-lg">4. Experiments & Conclusion</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">29. 실전 추론 시각화 (논문 Figure)</h2>
+                <div class="grid grid-cols-2 gap-10 h-full items-center">
+                    <div class="space-y-8">
+                        <p class="text-xl text-gray-700 leading-relaxed font-bold">
+                            논문의 정성적 평가(Qualitative Results)에서 Grounding DINO는 매우 놀라운 수준의 <strong>속성(Attribute) 이해력</strong>을 보여줍니다.
+                        </p>
+                        <div class="bg-purple-50 border-2 border-purple-200 p-8 rounded-2xl shadow-sm">
+                            <p class="text-2xl text-purple-900 font-extrabold mb-4">Query: "Pink flower on the left"</p>
+                            <p class="text-lg text-gray-700 leading-relaxed font-medium">
+                                사진에 꽃이 수십 송이 깔려 있어도, 정확히 색상(Pink)과 위치(Left) 속성을 모두 이해하여 해당 조건을 만족하는 꽃 하나에만 핀포인트로 박스를 칩니다.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="native-graphic h-full min-h-[400px] relative bg-white border border-gray-200 shadow-md p-6 rounded-3xl">
+                        
+                        <!-- Center Pink Flower Wrapper -->
+                        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+                            <div class="text-8xl drop-shadow-md opacity-40 z-10">🌸</div>
+                        </div>
+                        
+                        <!-- Right Yellow Flower Wrapper -->
+                        <div class="absolute top-1/2 right-1/4 transform -translate-y-1/2 flex items-center justify-center">
+                            <div class="text-8xl drop-shadow-md opacity-40 z-10">🌻</div>
+                        </div>
+
+                        <!-- Left Pink Flower (Target) with wrapper -->
+                        <div class="absolute top-1/2 left-1/4 transform -translate-y-1/2 flex items-center justify-center">
+                            <div class="text-8xl drop-shadow-md z-10">🌸</div>
+                            <div class="absolute w-36 h-36 border-4 border-purple-500 rounded-3xl shadow-[0_0_25px_rgba(168,85,247,0.6)] bg-purple-100/30 z-20">
+                                <span class="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-purple-600 text-white text-sm font-bold px-4 py-1.5 rounded-lg shadow-md whitespace-nowrap">"Pink flower on the left"</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 30: 응용 사례 Auto Labeling -->
+        <div class="slide" data-slide="30">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 90.90%;"></div></div>
+                <div class="mb-4 text-purple-600 font-bold text-lg">4. Experiments & Conclusion</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">30. 모델의 응용 1: Auto-labeling Pipeline</h2>
+                <div class="flex flex-col gap-10 h-full text-lg text-gray-700 font-medium">
+                    <p class="bg-gray-50 text-gray-800 p-6 rounded-2xl border border-gray-200 shadow-sm text-center font-bold text-xl">
+                        산업계에서 Grounding DINO가 각광받는 이유는 엄청난 "라벨링 비용 절감" 때문입니다.
+                    </p>
+                    <div class="grid grid-cols-3 gap-10 flex-grow mt-2">
+                        <div class="bg-white p-8 rounded-3xl border-t-8 border-gray-400 shadow-md flex flex-col items-center text-center">
+                            <div class="text-7xl drop-shadow-md mb-6">📸</div>
+                            <h5 class="font-extrabold text-gray-800 text-2xl mb-4">Unlabeled Data</h5>
+                            <p class="text-lg text-gray-600 leading-relaxed font-medium">
+                                공장, 도로 등에서 찍힌 수십만 장의 무라벨 원본 이미지를 준비합니다.
+                            </p>
+                        </div>
+                        <div class="bg-blue-50 p-8 rounded-3xl border-2 border-blue-400 shadow-lg flex flex-col items-center text-center relative transform scale-105">
+                            <div class="text-7xl drop-shadow-md mb-6">🤖</div>
+                            <h5 class="font-extrabold text-blue-800 text-2xl mb-4">Grounding DINO</h5>
+                            <p class="text-lg text-gray-700 leading-relaxed font-bold">
+                                "안전모", "크랙" 등 텍스트만 치면 밤새도록 고품질 Bounding Box를 자동 생성합니다.
+                            </p>
+                            <span class="absolute -right-7 top-1/2 transform -translate-y-1/2 text-4xl text-gray-400 font-bold z-10">➔</span>
+                        </div>
+                        <div class="bg-white p-8 rounded-3xl border-t-8 border-green-500 shadow-md flex flex-col items-center text-center">
+                            <div class="text-7xl drop-shadow-md mb-6">🎯</div>
+                            <h5 class="font-extrabold text-green-800 text-2xl mb-4">Custom YOLO</h5>
+                            <p class="text-lg text-gray-600 leading-relaxed font-medium">
+                                공짜로 얻은 라벨 데이터로 빠르고 가벼운 엣지용 모델을 재학습시켜 배포합니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 31: 응용 사례 SAM -->
+        <div class="slide" data-slide="31">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 93.93%;"></div></div>
+                <div class="mb-4 text-purple-600 font-bold text-lg">4. Experiments & Conclusion</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">31. 모델의 응용 2: Grounded-SAM</h2>
+                <div class="grid grid-cols-2 gap-10 h-full items-center">
+                    <div class="space-y-8 text-xl text-gray-700 font-medium">
+                        <p class="leading-relaxed font-bold">
+                            메타(Meta)의 <strong>SAM (Segment Anything Model)</strong>과의 결합은 비전 AI 생태계의 패러다임을 바꿨습니다.
+                        </p>
+                        <ul class="space-y-6 bg-white p-8 rounded-3xl border border-gray-200 shadow-sm">
+                            <li class="flex flex-col gap-2">
+                                <span class="text-blue-600 font-extrabold">Step 1. Text to Box</span>
+                                <span class="text-gray-600 text-lg">사용자가 텍스트를 입력하면 Grounding DINO가 Bounding Box를 찾아냅니다.</span>
+                            </li>
+                            <li class="flex flex-col gap-2">
+                                <span class="text-purple-600 font-extrabold">Step 2. Box to Mask</span>
+                                <span class="text-gray-600 text-lg">그 박스 좌표(Prompt)를 그대로 SAM에게 넘겨주어, 네모 박스가 아닌 물체 외곽선을 따는 정밀한 픽셀 마스크(Mask)를 얻어냅니다.</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="native-graphic h-full min-h-[350px] flex-col p-8 bg-gray-50 border border-gray-200 shadow-md rounded-3xl gap-6">
+                        <div class="flex justify-around items-center w-full bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                            <span class="text-xl font-bold">"고양이"</span>
+                            <span class="text-2xl text-gray-400">➔</span>
+                            <div class="text-6xl border-4 border-blue-400 p-2 rounded-xl">🐈</div>
+                            <span class="text-sm font-bold text-blue-600 mt-2 block text-center">G-DINO (Box)</span>
+                        </div>
+                        <div class="text-4xl text-gray-400 font-bold text-center">⬇️</div>
+                        <div class="flex justify-around items-center w-full bg-purple-50 p-4 rounded-2xl shadow-sm border border-purple-200">
+                            <div class="text-6xl border-4 border-blue-400 p-2 rounded-xl opacity-50">🐈</div>
+                            <span class="text-2xl text-purple-400 font-bold">+ SAM ➔</span>
+                            <div class="text-6xl bg-purple-400 text-white rounded-[40%] p-2 shadow-lg">🐈</div>
+                            <span class="text-sm font-bold text-purple-700 mt-2 block text-center">Perfect Mask</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 32: 한계점 1 -->
+        <div class="slide" data-slide="32">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 96.96%;"></div></div>
+                <div class="mb-4 text-purple-600 font-bold text-lg">4. Experiments & Conclusion</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">32. 모델의 한계점 (Limitations) 1</h2>
+                <div class="flex flex-col gap-10 h-full items-center justify-center">
+                    <div class="bg-yellow-50 border-2 border-yellow-200 p-10 rounded-3xl shadow-md max-w-4xl w-full text-center">
+                        <div class="text-7xl mb-6 drop-shadow-md">🐢</div>
+                        <h4 class="font-extrabold text-yellow-800 text-3xl mb-6">막대한 연산 비용 (Heavy Computation)</h4>
+                        <p class="text-xl text-gray-700 leading-relaxed font-medium">
+                            이미지 백본(Swin)과 텍스트 백본(BERT)을 동시에 돌려야 할 뿐만 아니라, Feature Enhancer와 Decoder 단계에서 <strong>계속해서 Cross-Attention 연산</strong>을 수행해야 합니다.<br><br>
+                            결과적으로 모델이 상당히 무거워져, 드론이나 모바일 기기에서의 실시간(Real-time, 30fps 이상) 비디오 추론에 바로 적용하기에는 무리가 있습니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 33: 한계점 2 -->
+        <div class="slide" data-slide="33">
+            <div class="glass-card">
+                <div class="progress-container"><div class="progress-bar" style="width: 100%;"></div></div>
+                <div class="mb-4 text-purple-600 font-bold text-lg">4. Experiments & Conclusion</div>
+                <h2 class="text-3xl font-extrabold mb-6 text-gray-800">33. 모델의 한계점 (Limitations) 2</h2>
+                <div class="grid grid-cols-2 gap-10 h-full items-center">
+                    <div class="space-y-6">
+                        <div class="bg-yellow-50 p-8 rounded-3xl border-2 border-yellow-200 shadow-sm">
+                            <h4 class="font-extrabold text-yellow-800 text-2xl mb-4">수량(Counting) 파악의 어려움</h4>
+                            <p class="text-lg text-gray-700 leading-relaxed font-medium">
+                                언어 모델의 고질적인 한계 중 하나입니다. 프롬프트에 "사과 3개"처럼 명확한 개수를 요구하는 텍스트를 입력했을 때 오류가 잦습니다. <br><br>
+                                3개의 박스를 각각 예쁘게 치는 대신, 사과 3개가 모여 있는 곳에 <strong>거대한 박스 1개</strong>를 치거나, 일부를 누락하는 현상이 발생합니다.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="native-graphic h-full min-h-[350px] relative bg-white border border-gray-200 shadow-md p-6 rounded-3xl flex items-center justify-center">
+                        <!-- Group wrapper for apples -->
+                        <div class="relative flex items-center justify-center gap-8 p-10">
+                            <span class="text-8xl drop-shadow-md z-10">🍎</span>
+                            <span class="text-8xl drop-shadow-md z-10">🍎</span>
+                            <span class="text-8xl drop-shadow-md z-10">🍎</span>
+                            
+                            <!-- Box surrounding the group -->
+                            <div class="absolute inset-0 border-8 border-red-500 border-dashed rounded-3xl bg-red-50/40 z-20 shadow-inner"></div>
+                        </div>
+                        <span class="absolute bottom-8 bg-red-100 text-red-800 px-6 py-3 rounded-xl text-lg font-bold border border-red-300 z-30 shadow-md">
+                            각각 치지 못하고 하나로 뭉뚱그려 잡는 오류
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 34: Conclusion -->
+        <div class="slide" data-slide="34">
+            <div class="glass-card justify-center items-center text-center">
+                <div class="progress-container"><div class="progress-bar" style="width: 100%;"></div></div>
+                <h2 class="text-6xl font-extrabold mb-10 text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-blue-600 italic tracking-tighter">"The Ultimate Open-Set Detector"</h2>
+                <div class="max-w-4xl text-2xl text-gray-700 space-y-10 font-bold leading-relaxed">
+                    <p>Grounding DINO는 최고 성능의 비전 디텍터(DINO)의 뼈대에, 무한한 지식을 가진 언어(Language)를 <strong>초기 단계부터 깊숙이 융합(Deep Fusion)</strong>하여 Open-set 객체 탐지의 새로운 기준을 세웠습니다.</p>
+                    <div class="h-2 w-40 bg-gradient-to-r from-emerald-500 to-blue-500 mx-auto rounded-full my-12"></div>
+                    <p class="font-extrabold text-gray-800 tracking-widest uppercase text-4xl">Thank You</p>
+                    <p class="text-xl uppercase font-extrabold text-blue-700 bg-blue-50 inline-block px-8 py-4 rounded-full border border-blue-200 shadow-md mt-6 hover:bg-blue-100 transition cursor-pointer">Q & A Session</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 네비게이션 -->
+        <div id="navBar" class="fixed bottom-10 left-0 right-0 flex justify-between items-center px-12 z-50">
+            <button id="prevBtn" class="nav-btn group">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:text-cyan-600 transition-colors"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <div id="pageIndicator" class="px-8 py-3 bg-white/95 backdrop-blur-md rounded-full border border-gray-200 font-extrabold text-gray-500 tracking-tighter shadow-md text-xl mx-auto">
+                <span id="currentPage" class="text-blue-600 text-2xl">1</span> <span class="mx-2">/</span> 34
+            </div>
+            <button id="nextBtn" class="nav-btn group">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:text-blue-600 transition-colors"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 34;
+
+        const showSlide = (n) => {
+            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+            const target = document.querySelector(`.slide[data-slide="${n}"]`);
+            if (target) {
+                target.classList.add('active');
+                document.getElementById('currentPage').innerText = n;
+                target.querySelector('.glass-card').scrollTop = 0;
+            }
+            // 네비게이션 동적 레이아웃
+            const navBar = document.getElementById('navBar');
+            const pageIndicator = document.getElementById('pageIndicator');
+            if (n === 15) {
+                // 15페이지: 페이지 표시 숨김, 버튼은 양쪽 끝
+                pageIndicator.style.display = 'none';
+                navBar.classList.remove('justify-center','gap-12');
+                navBar.classList.add('justify-between','px-12');
+            } else {
+                // 나머지: 페이지 표시, 버튼은 중앙
+                pageIndicator.style.display = '';
+                navBar.classList.remove('justify-between','px-12');
+                navBar.classList.add('justify-center','gap-12');
+            }
+        };
+
+        const next = () => { if (currentSlide < totalSlides) { currentSlide++; showSlide(currentSlide); } };
+        const prev = () => { if (currentSlide > 1) { currentSlide--; showSlide(currentSlide); } };
+
+        document.getElementById('nextBtn').addEventListener('click', next);
+        document.getElementById('prevBtn').addEventListener('click', prev);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') next();
+            if (e.key === 'ArrowLeft') prev();
+        });
+        // 최초 진입 시 레이아웃 반영
+        showSlide(currentSlide);
+    </script>
+</body>
+</html>
